@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Movie Picker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- LottieFiles CDN for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.4/lottie.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0A0A0A; /* Very dark almost black */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Parallax Background Layer */
+        .parallax-bg {
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: calc(100% + 100px);
+            height: calc(100% + 100px);
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%234A004A' fill-opacity='0.02'%3E%3Cpath d='M12 10a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm18 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm18 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm-36 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm18 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm18 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm-36 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm18 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm18 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4z'/%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: repeat;
+            opacity: 0.05;
+            z-index: -2;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Floating Stars/Circles Animation (Neutral) */
+        .star {
+            position: absolute;
+            font-size: 2rem;
+            color: #8A2BE2; /* Blue Violet */
+            animation: float-star 10s ease-in-out infinite;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+            filter: drop-shadow(0 0 5px #8A2BE2);
+        }
+
+        .star:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; transform: scale(0.8); }
+        .star:nth-child(2) { top: 30%; left: 15%; animation-delay: 2s; transform: scale(1.2); }
+        .star:nth-child(3) { top: 50%; left: 25%; animation-delay: 4s; transform: scale(0.9); }
+        .star:nth-child(4) { top: 70%; left: 35%; animation-delay: 6s; transform: scale(1.1); }
+        .star:nth-child(5) { top: 20%; right: 5%; animation-delay: 1s; transform: scale(1.0); }
+        .star:nth-child(6) { top: 40%; right: 15%; animation-delay: 3s; transform: scale(0.7); }
+        .star:nth-child(7) { top: 60%; right: 25%; animation-delay: 5s; transform: scale(1.3); }
+        .star:nth-child(8) { top: 80%; right: 35%; animation-delay: 7s; transform: scale(0.95); }
+
+        @keyframes float-star {
+            0% { transform: translateY(0) rotate(0deg) scale(var(--scale, 1)); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% { transform: translateY(-100vh) rotate(360deg) scale(var(--scale, 1.2)); opacity: 0; }
+        }
+
+        /* Button hover effects - neutral theme */
+        .btn-neutral {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid transparent;
+        }
+        .btn-neutral:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            background-color: #6A0DAD; /* Darker Purple */
+            border-color: #8A2BE2; /* Blue Violet border on hover */
+        }
+
+        /* Chatbot specific styles - dark theme */
+        .chat-message {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+            color: #E0BBE4; /* Light text on dark background */
+        }
+        .chat-message.user {
+            background-color: #4A004A; /* Darker purple for user */
+            align-self: flex-end;
+            border-bottom-right-radius: 0.25rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .chat-message.bot {
+            background-color: #330033; /* Even darker purple for bot */
+            align-self: flex-start;
+            border-bottom-left-radius: 0.25rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Modal styles - updated for dark theme */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8); /* Darker overlay for popups */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #2C2C2C; /* Dark background */
+            color: #E0BBE4; /* Light text */
+            margin: auto;
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%; /* Wider for movie list */
+            max-width: 700px; /* Max width for readability */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            position: relative;
+            border: 1px solid #8A2BE2; /* Blue Violet border */
+            max-height: 90vh; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling within modal */
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #8A2BE2; /* Blue Violet close button */
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #E0BBE4; /* Lighter on hover */
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Custom scrollbar for chat window and modals */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #8A2BE2; /* Blue Violet */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6A0DAD; /* Darker Purple */
+        }
+
+        /* Subtle pulsating animation for the title */
+        @keyframes pulse-slow {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 0 0 10px rgba(138, 43, 226, 0.5); /* Blue Violet glow */
+            }
+            50% {
+                transform: scale(1.02);
+                text-shadow: 0 0 20px rgba(138, 43, 226, 0.8);
+            }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s infinite ease-in-out;
+        }
+
+        /* Input/Select field styling for dark theme */
+        .dark-input {
+            background-color: #0A0A0A;
+            border-color: #6A0DAD;
+            color: #E0BBE4;
+        }
+        .dark-input::placeholder {
+            color: #957DAD;
+        }
+        .dark-input:focus {
+            border-color: #8A2BE2;
+            box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.5);
+        }
+        .dark-select option {
+            background-color: #0A0A0A;
+            color: #E0BBE4;
+        }
+
+        /* Tab specific styles */
+        .tab-button {
+            background-color: #1A1A1A;
+            color: #E0BBE4;
+            padding: 12px 20px;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            flex-grow: 1;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+        }
+        .tab-button.active {
+            background-color: #2C2C2C;
+            color: #8A2BE2; /* Blue Violet */
+            border-bottom: 2px solid #8A2BE2;
+        }
+        .tab-button:hover:not(.active) {
+            background-color: #330033;
+            color: #8A2BE2;
+        }
+        .tab-content {
+            background-color: #2C2C2C;
+            padding: 24px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #8A2BE2;
+            flex-grow: 1;
+            display: none;
+            flex-direction: column;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+        .feature-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Improved readability for general text and lists */
+        .readable-text {
+            line-height: 1.6;
+            font-size: 1.125rem;
+        }
+        .suggestions-list li {
+            line-height: 1.8;
+            margin-bottom: 0.5rem;
+        }
+        .movie-card {
+            background-color: #1A1A1A;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #6A0DAD; /* Darker Purple */
+            text-align: left;
+        }
+        .movie-card h4 {
+            color: #8A2BE2; /* Blue Violet */
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .movie-card p {
+            color: #E0BBE4;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .movie-card .ratings {
+            color: #957DAD;
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
+
+        /* Lottie animation containers */
+        .lottie-container {
+            position: absolute;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .lottie-top-left { top: 5%; left: 5%; width: 150px; height: 150px; }
+        .lottie-bottom-right { bottom: 5%; right: 5%; width: 150px; height: 150px; }
+        .lottie-center-header { top: -20px; right: 20px; width: 80px; height: 80px; }
+
+        /* New Loading Overlay Styles */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #8A2BE2;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.7);
+            display: none;
+        }
+
+        #loading-overlay .loading-icon {
+            font-size: 4rem;
+            animation: pulse-icon 1.5s infinite ease-in-out;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 1023px) {
+            main {
+                flex-direction: column;
+                padding: 16px;
+            }
+            .tab-button {
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+            .tab-content {
+                padding: 16px;
+            }
+            .lottie-top-left, .lottie-bottom-right {
+                width: 100px;
+                height: 100px;
+            }
+            .lottie-center-header {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+    <!-- Parallax Background Layer -->
+    <div class="parallax-bg" id="parallax-bg"></div>
+
+    <!-- Floating Stars/Circles -->
+    <div class="star">🌟</div>
+    <div class="star">🎬</div>
+    <div class="star">🍿</div>
+    <div class="star">🎥</div>
+    <div class="star">✨</div>
+    <div class="star">💡</div>
+    <div class="star">🎭</div>
+    <div class="star">💫</div>
+
+    <!-- Lottie Animations -->
+    <div id="lottie-sparkle-top-left" class="lottie-container lottie-top-left"></div>
+    <div id="lottie-sparkle-bottom-right" class="lottie-container lottie-bottom-right"></div>
+
+    <header class="text-center mb-8 relative z-10">
+        <h1 class="text-5xl md:text-6xl font-extrabold text-[#8A2BE2] drop-shadow-lg animate-pulse-slow">
+            Ultimate Movie Picker
+        </h1>
+        <p class="text-xl md:text-2xl text-[#E0BBE4] mt-4 italic readable-text">
+            Your personal guide to cinematic adventures! 🍿
+        </p>
+        <div id="lottie-header-sparkle" class="lottie-container lottie-center-header absolute"></div>
+        <!-- Display User ID to show unique session/persistence -->
+        <p id="user-id-display" class="text-sm text-[#957DAD] mt-2">Your ID: Loading...</p>
+    </header>
+
+    <main class="w-full max-w-5xl bg-[#1A1A1A] bg-opacity-90 rounded-3xl shadow-2xl p-6 md:p-10 flex flex-col lg:flex-row gap-8 relative z-10 border border-[#6A0DAD]">
+
+        <!-- AI Movie Features Section (Tabbed) -->
+        <section class="flex-1 p-0 rounded-2xl flex flex-col">
+            <h2 class="text-3xl font-bold text-[#8A2BE2] mb-4 text-center">Find Your Perfect Movie!</h2>
+
+            <!-- Tabs Navigation -->
+            <div class="flex flex-wrap justify-center mb-4">
+                <button class="tab-button active" data-tab="quick-picks">Quick Picks</button>
+                <button class="tab-button" data-tab="curated-picks">Curated Picks</button>
+                <button class="tab-button" data-tab="watch-suggestions">Watch Suggestions 🎬</button>
+                <button class="tab-button" data-tab="surprise-me">Surprise Me! 🎁</button>
+                <button class="tab-button" data-tab="my-list">My List 📝</button> <!-- MY LIST TAB -->
+                <button class="tab-button" data-tab="chatbot">Movie Bot</button> <!-- CHATBOT TAB -->
+            </div>
+
+            <!-- Tabs Content -->
+            <div id="quick-picks" class="tab-content active">
+                <div class="feature-group">
+                    <!-- Mood-Based Picker -->
+                    <div>
+                        <label for="mood-select" class="block text-lg font-semibold mb-3 readable-text">What mood are you in?</label>
+                        <select id="mood-select" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input dark-select">
+                            <option value="">Select a mood...</option>
+                            <option value="Cozy & Relaxing">Cozy & Relaxing 🛋️</option>
+                            <option value="Exciting Adventure">Exciting Adventure 🌟</option>
+                            <option value="Thought-Provoking">Thought-Provoking 🤔</option>
+                            <option value="Lighthearted & Funny">Lighthearted & Funny 😂</option>
+                            <option value="Mystery & Suspense">Mystery & Suspense 🕵️‍♀️</option>
+                            <option value="Fantasy & Magical">Fantasy & Magical ✨</option>
+                            <option value="Sci-Fi & Futuristic">Sci-Fi & Futuristic 🚀</option>
+                        </select>
+                        <button id="mood-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Suggest Movies for My Mood!
+                        </button>
+                    </div>
+
+                    <!-- Genre Explorer -->
+                    <div>
+                        <label for="genre-select" class="block text-lg font-semibold mb-3 readable-text">Or explore by genre:</label>
+                        <select id="genre-select" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input dark-select">
+                            <option value="">Select a genre...</option>
+                            <option value="Romance">Romance 💖</option>
+                            <option value="Action">Action 💥</option>
+                            <option value="Comedy">Comedy 😂</option>
+                            <option value="Drama">Drama 🎭</option>
+                            <option value="Sci-Fi">Sci-Fi 🌌</option>
+                            <option value="Fantasy">Fantasy 🧚</option>
+                            <option value="Thriller">Thriller🔪</option>
+                            <option value="Animation">Animation 🎬</option>
+                        </select>
+                        <button id="genre-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Show Movies in This Genre!
+                        </button>
+                    </div>
+
+                    <!-- Keyword/Theme Search -->
+                    <div>
+                        <label for="keyword-input" class="block text-lg font-semibold mb-3 readable-text">Describe your desired theme:</label>
+                        <input type="text" id="keyword-input" placeholder="e.g., 'cozy rainy day', 'epic battles', 'feel-good'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="keyword-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Find Movies by Theme!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="curated-picks" class="tab-content hidden">
+                <div class="feature-group">
+                    <!-- Director/Actor Suggestions -->
+                    <div>
+                        <label for="person-input" class="block text-lg font-semibold mb-3 readable-text">Any favorite director or actor?</label>
+                        <input type="text" id="person-input" placeholder="e.g., 'Christopher Nolan', 'Tom Hanks'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="person-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Discover Movies by Person!
+                        </button>
+                    </div>
+
+                    <!-- Similar to X Feature -->
+                    <div>
+                        <label for="similar-input" class="block text-lg font-semibold mb-3 readable-text">Watched something great? Suggest movies similar to:</label>
+                        <input type="text" id="similar-input" placeholder="e.g., 'The Notebook', 'Inception'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="similar-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Find Similar Movies!
+                        </button>
+                    </div>
+
+                    <!-- Movie Night Planner -->
+                    <div>
+                        <label for="movie-night-theme-input" class="block text-lg font-semibold mb-3 readable-text">✨ Plan a perfect movie night! What's the theme?</label>
+                        <input type="text" id="movie-night-theme-input" placeholder="e.g., 'cozy night in', 'action-packed evening', 'laughter-filled'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="movie-night-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Suggest Movie Night Idea!
+                        </button>
+                    </div>
+
+                    <!-- Movie Plot Summarizer -->
+                    <div>
+                        <label for="movie-plot-input" class="block text-lg font-semibold mb-3 readable-text">✨ Curious about a movie? Get a quick summary:</label>
+                        <input type="text" id="movie-plot-input" placeholder="e.g., 'Interstellar', 'Pride and Prejudice'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="movie-plot-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Summarize Movie Plot!
+                        </button>
+                    </div>
+
+                    <!-- Movie Trivia/Fun Facts -->
+                    <div>
+                        <label for="movie-trivia-input" class="block text-lg font-semibold mb-3 readable-text">✨ Discover fun facts about a movie!</label>
+                        <input type="text" id="movie-trivia-input" placeholder="e.g., 'Titanic', 'The Princess Bride'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="movie-trivia-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Get Movie Trivia!
+                        </button>
+                    </div>
+
+                    <!-- Personalized Movie Soundtrack -->
+                    <div>
+                        <label for="soundtrack-mood-input" class="block text-lg font-semibold mb-3 readable-text">✨ Create a personalized soundtrack for a mood!</label>
+                        <input type="text" id="soundtrack-mood-input" placeholder="e.g., 'epic battle scene', 'relaxing evening'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="soundtrack-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Suggest Soundtrack!
+                        </button>
+                    </div>
+
+                    <!-- Who I am watching with -->
+                    <div>
+                        <label for="watching-with-select" class="block text-lg font-semibold mb-3 readable-text">Who are you watching with?</label>
+                        <select id="watching-with-select" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input dark-select">
+                            <option value="">Select audience...</option>
+                            <option value="Friends">Friends 🤝</option>
+                            <option value="Family">Family 👨‍👩‍👧‍👦</option>
+                            <option value="Partner">Partner ❤️</option>
+                            <option value="Solo">Solo 🧘‍♀️</option>
+                            <option value="Kids">Kids 👶</option>
+                            <option value="Pets">Pets 🐾</option>
+                        </select>
+                        <button id="watching-with-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Suggest Movies for This Audience!
+                        </button>
+                    </div>
+
+                    <!-- Movie Series -->
+                    <div>
+                        <label for="movie-series-input" class="block text-lg font-semibold mb-3 readable-text">Explore a specific movie series!</label>
+                        <input type="text" id="movie-series-input" placeholder="e.g., 'Lord of the Rings', 'Star Wars'" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input">
+                        <button id="movie-series-submit" class="mt-4 w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Get Series Details!
+                        </button>
+                    </div>
+
+                    <!-- NEW: Discover Movie Series (Dropdown) -->
+                    <div>
+                        <label for="series-discovery-select" class="block text-lg font-semibold mb-3 readable-text">✨ Discover new movie series by genre!</label>
+                        <select id="series-discovery-select" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input dark-select">
+                            <option value="">Select a genre for series...</option>
+                            <option value="Action">Action Series 💥</option>
+                            <option value="Comedy">Comedy Series 😂</option>
+                            <option value="Drama">Drama Series 🎭</option>
+                            <option value="Fantasy">Fantasy Series ✨</option>
+                            <option value="Horror">Horror Series 👻</option>
+                            <option value="Mystery">Mystery Series 🕵️‍♀️</option>
+                            <option value="Sci-Fi">Sci-Fi Series 🚀</option>
+                            <option value="Thriller">Thriller Series 🔪</option>
+                        </select>
+                        <button id="series-discovery-submit" class="mt-4 w-full bg-[#6A0DAD] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral">
+                            Suggest Movie Series! 📺
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="watch-suggestions" class="tab-content hidden text-center">
+                <h3 class="text-3xl text-[#E0BBE4] mb-4">General Watch Suggestions 🎬</h3>
+                <p class="text-lg text-[#957DAD] mb-6 readable-text">Need a quick recommendation for a general audience?</p>
+                <button id="watch-suggestions-submit" class="w-full bg-[#8A2BE2] text-white py-4 px-8 rounded-lg font-bold text-xl btn-neutral">
+                    Suggest a General Movie!
+                </button>
+            </div>
+
+            <div id="surprise-me" class="tab-content hidden text-center">
+                <h3 class="text-3xl text-[#E0BBE4] mb-4">Feeling Spontaneous?</h3>
+                <p class="text-lg text-[#957DAD] mb-6 readable-text">Let the app surprise you with a delightful movie pick!</p>
+                <button id="surprise-me-submit" class="w-full bg-[#6A0DAD] text-white py-4 px-8 rounded-lg font-bold text-xl btn-neutral">
+                    Surprise Me! 🎁
+                </button>
+            </div>
+
+            <!-- MY LIST TAB CONTENT -->
+            <div id="my-list" class="tab-content hidden">
+                <h3 class="text-3xl font-bold text-[#8A2BE2] mb-4 text-center">Your "To Watch" List!</h3>
+                <div id="favorite-movies-section" class="mb-8">
+                    <h4 class="text-2xl font-bold text-[#E0BBE4] mb-4 text-center">Favorited Movies 🎬</h4>
+                    <div id="favorite-movies-list" class="flex-1 overflow-y-auto custom-scrollbar p-2">
+                        <!-- Favorite movies will be loaded here -->
+                        <p id="no-favorite-movies" class="text-[#957DAD] text-center mt-4 readable-text hidden">You haven't favorited any movies yet.</p>
+                    </div>
+                </div>
+                <div id="favorite-series-section">
+                    <h4 class="text-2xl font-bold text-[#E0BBE4] mb-4 text-center">Favorited Series 📺</h4>
+                    <div id="favorite-series-list" class="flex-1 overflow-y-auto custom-scrollbar p-2">
+                        <!-- Favorite series will be loaded here -->
+                        <p id="no-favorite-series" class="text-[#957DAD] text-center mt-4 readable-text hidden">You haven't favorited any series yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHATBOT TAB CONTENT -->
+            <div id="chatbot" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-[#8A2BE2] mb-6 text-center">Chat with the Movie Bot!</h2>
+                <div id="chat-window" class="flex-1 bg-[#1A1A1A] p-4 rounded-lg border border-[#6A0DAD] overflow-y-auto mb-4 flex flex-col custom-scrollbar" style="min-height: 250px;">
+                    <!-- Initial bot message -->
+                    <div class="chat-message bot readable-text">
+                        Hello! I'm your Movie Bot, ready to help you find the perfect film. What kind of movie are you looking for today?
+                    </div>
+                </div>
+                <div class="flex">
+                    <input type="text" id="chat-input" placeholder="Type your message..." class="flex-1 p-3 rounded-l-lg focus:outline-none focus:ring-2 dark-input">
+                    <button id="chat-send" class="bg-[#8A2BE2] text-white py-3 px-6 rounded-r-lg font-bold btn-neutral">
+                        Send 💬
+                    </button>
+                </div>
+                <div id="chat-loading-spinner" class="hidden text-center mt-2">
+                    <i class="fas fa-spinner fa-spin text-[#8A2BE2] text-xl"></i>
+                    <p class="text-[#E0BBE4] text-sm mt-1 readable-text">Movie Bot is thinking...</p>
+                </div>
+            </div>
+
+            <!-- Movie Suggestions Display - This is now inside the modal, but kept for fallback/debugging -->
+            <div id="movie-suggestions" class="mt-8 bg-[#330033] p-5 rounded-lg shadow-inner hidden border border-[#6A0DAD]">
+                <h3 class="text-2xl font-bold text-[#8A2BE2] mb-4 text-center">Here are some suggestions for you:</h3>
+                <ul id="suggestions-list" class="list-disc list-inside text-[#E0BBE4] text-lg suggestions-list">
+                    <!-- Suggestions will be inserted here -->
+                </ul>
+                <p id="no-suggestions" class="text-[#957DAD] text-center mt-4 readable-text hidden">No suggestions yet. Try another option!</p>
+            </div>
+            <div id="loading-spinner" class="hidden text-center mt-4">
+                <i class="fas fa-spinner fa-spin text-[#8A2BE2] text-3xl"></i>
+                <p class="text-[#E0BBE4] mt-2 readable-text">Finding the perfect movie for you...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="custom-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <p id="modal-message" class="text-lg readable-text"></p>
+            <button id="modal-ok-button" class="mt-4 bg-[#8A2BE2] text-white py-2 px-5 rounded-lg font-bold btn-neutral">OK</button>
+        </div>
+    </div>
+
+    <!-- Movie Suggestions Modal -->
+    <div id="movie-suggestions-modal" class="modal">
+        <div class="modal-content custom-scrollbar">
+            <span class="close-button" id="close-movie-modal">&times;</span>
+            <h3 class="text-2xl font-bold text-[#8A2BE2] mb-4 text-center" id="modal-title">Your Movie Picks!</h3>
+            <p class="text-lg text-[#E0BBE4] mb-6 readable-text" id="modal-refine-prompt">
+                Here are some options for you. If you wish, tell us more to refine your choices, or simply click "Show These Movies!"
+            </p>
+            <input type="text" id="modal-refine-input" placeholder="Refine your search (e.g., 'shorter', 'more comedy')" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 dark-input mb-4">
+            <button id="modal-show-movies-button" class="w-full bg-[#8A2BE2] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral mb-4">
+                Show These Movies!
+            </button>
+            <button id="modal-refresh-button" class="w-full bg-[#6A0DAD] text-white py-3 px-6 rounded-lg font-bold text-lg btn-neutral mt-2">
+                Refresh Suggestions ✨
+            </button>
+            <div id="modal-movie-list" class="mt-4 text-left">
+                <!-- Movies or other suggestions will be inserted here -->
+            </div>
+            <p id="modal-no-suggestions" class="text-[#957DAD] text-center mt-4 readable-text hidden">No suggestions yet. Try another option!</p>
+            <div id="modal-loading-spinner" class="hidden text-center mt-4">
+                <i class="fas fa-spinner fa-spin text-[#8A2BE2] text-3xl"></i>
+                <p class="text-[#E0BBE4] mt-2 readable-text">Refining choices...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Loading Overlay -->
+    <div id="loading-overlay">
+        <i class="fas fa-film loading-icon"></i>
+        <p>Gathering movie suggestions for you...</p>
+    </div>
+
+    <script type="module">
+        // Firebase imports must be at the top level of the module
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, setDoc, deleteDoc, doc, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Declare Firebase variables globally within the module scope
+        let app, db, auth;
+        let userId = null; // Initialize userId
+
+        // Function to show custom modal
+        function showCustomModal(message) {
+            const modal = document.getElementById('custom-modal');
+            const modalMessage = document.getElementById('modal-message');
+            modalMessage.textContent = message;
+            modal.style.display = 'flex'; // Use flex to center
+        }
+
+        // Close modal when close button or OK is clicked
+        document.querySelector('.close-button').onclick = function() {
+            document.getElementById('custom-modal').style.display = 'none';
+        }
+        document.getElementById('modal-ok-button').onclick = function() {
+            document.getElementById('custom-modal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            const modal = document.getElementById('custom-modal');
+            const movieModal = document.getElementById('movie-suggestions-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+            if (event.target == movieModal) {
+                movieModal.style.display = 'none';
+            }
+        }
+
+        // Parallax Effect
+        const parallaxBg = document.getElementById('parallax-bg');
+        document.body.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * -30; // -30px max movement
+            const y = (e.clientY / window.innerHeight - 0.5) * -30; // -30px max movement
+            parallaxBg.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+
+        // Global variables for Firebase (will be provided by the environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase (if config is available)
+        if (Object.keys(firebaseConfig).length > 0) {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Sign in anonymously or with custom token
+            async function authenticateFirebase() {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    userId = auth.currentUser?.uid || crypto.randomUUID(); // Set userId after auth
+                    console.log("Firebase authenticated successfully. User ID:", userId);
+                    document.getElementById('user-id-display').textContent = `Your ID: ${userId}`; // Display user ID
+                    // Now that we are authenticated, we can start listening to chat messages and favorite movies
+                    setupChatListener();
+                    loadFavoriteMovies(); // Load favorites on auth
+                } catch (error) {
+                    console.error("Firebase authentication failed:", error);
+                    showCustomModal("Failed to connect to the movie database. Please try again later!");
+                }
+            }
+            authenticateFirebase();
+        } else {
+            console.warn("Firebase config not available. Chat history and favorite movies will not be persisted.");
+            // If Firebase is not configured, we'll still allow the chatbot to function
+            // but without persistence.
+            document.getElementById('user-id-display').textContent = `Your ID: Not logged in (data not saved)`;
+        }
+
+        const moodSelect = document.getElementById('mood-select');
+        const moodSubmit = document.getElementById('mood-submit');
+        const genreSelect = document.getElementById('genre-select');
+        const genreSubmit = document.getElementById('genre-submit');
+        const surpriseMeSubmit = document.getElementById('surprise-me-submit');
+        const movieSuggestionsDiv = document.getElementById('movie-suggestions'); // Kept for fallback, but not primary display
+        const suggestionsList = document.getElementById('suggestions-list'); // Kept for fallback
+        const noSuggestionsPara = document.getElementById('no-suggestions'); // Kept for fallback
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        const chatWindow = document.getElementById('chat-window');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendButton = document.getElementById('chat-send');
+        const chatLoadingSpinner = document.getElementById('chat-loading-spinner');
+
+        // Existing AI feature elements
+        const keywordInput = document.getElementById('keyword-input');
+        const keywordSubmit = document.getElementById('keyword-submit');
+        const personInput = document.getElementById('person-input');
+        const personSubmit = document.getElementById('person-submit');
+        const similarInput = document.getElementById('similar-input');
+        const similarSubmit = document.getElementById('similar-submit');
+
+        // NEW AI feature elements
+        const movieNightThemeInput = document.getElementById('movie-night-theme-input');
+        const movieNightSubmit = document.getElementById('movie-night-submit');
+        const moviePlotInput = document.getElementById('movie-plot-input');
+        const moviePlotSubmit = document.getElementById('movie-plot-submit');
+        const watchSuggestionsSubmit = document.getElementById('watch-suggestions-submit');
+        const movieTriviaInput = document.getElementById('movie-trivia-input');
+        const movieTriviaSubmit = document.getElementById('movie-trivia-submit');
+        const soundtrackMoodInput = document.getElementById('soundtrack-mood-input');
+        const soundtrackSubmit = document.getElementById('soundtrack-submit');
+        const watchingWithSelect = document.getElementById('watching-with-select');
+        const watchingWithSubmit = document.getElementById('watching-with-submit');
+        const movieSeriesInput = document.getElementById('movie-series-input');
+        const movieSeriesSubmit = document.getElementById('movie-series-submit');
+        const seriesDiscoverySelect = document.getElementById('series-discovery-select'); // Changed from input to select
+        const seriesDiscoverySubmit = document.getElementById('series-discovery-submit');
+
+
+        // Movie Suggestions Modal elements
+        const movieSuggestionsModal = document.getElementById('movie-suggestions-modal');
+        const closeMovieModalButton = document.getElementById('close-movie-modal');
+        const modalRefinePrompt = document.getElementById('modal-refine-prompt');
+        const modalRefineInput = document.getElementById('modal-refine-input');
+        const modalShowMoviesButton = document.getElementById('modal-show-movies-button');
+        const modalRefreshButton = document.getElementById('modal-refresh-button');
+        const modalMovieList = document.getElementById('modal-movie-list');
+        const modalNoSuggestions = document.getElementById('modal-no-suggestions');
+        const modalLoadingSpinner = document.getElementById('modal-loading-spinner');
+        const modalTitle = document.getElementById('modal-title');
+
+        // Global Loading Overlay element
+        const globalLoadingOverlay = document.getElementById('loading-overlay');
+
+        // My List elements
+        const favoriteMoviesList = document.getElementById('favorite-movies-list');
+        const noFavoriteMovies = document.getElementById('no-favorite-movies');
+        const favoriteSeriesList = document.getElementById('favorite-series-list'); // New
+        const noFavoriteSeries = document.getElementById('no-favorite-series'); // New
+
+
+        let currentMoviePrompt = ''; // To store the base prompt for refinement
+        let currentPromptSchema = null; // To store the schema used for the last main query
+
+        // Define a specific schema for series details (a single object with a films array)
+        const seriesDetailsSchema = {
+            type: "OBJECT",
+            properties: {
+                "series_title": { "type": "STRING" },
+                "series_type": { "type": "STRING" },
+                "films": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "title": { "type": "STRING" },
+                            "description": { "type": "STRING" },
+                            "imdb_rating": { "type": "STRING" },
+                            "rotten_tomatoes": { "type": "STRING" },
+                            "year": { "type": "STRING" }
+                        },
+                        "propertyOrdering": ["title", "description", "imdb_rating", "rotten_tomatoes", "year"]
+                    }
+                }
+            },
+            "propertyOrdering": ["series_title", "series_type", "films"]
+        };
+
+        // Define the default schema for structured movie lists (an array of movie objects)
+        const movieArraySchema = {
+            type: "ARRAY",
+            items: {
+                type: "OBJECT",
+                properties: {
+                    "title": { "type": "STRING" },
+                    "description": { "type": "STRING" },
+                    "imdb_rating": { "type": "STRING" },
+                    "rotten_tomatoes": { "type": "STRING" },
+                    "year": { "type": "STRING" }
+                },
+                propertyOrdering: ["title", "description", "imdb_rating", "rotten_tomatoes", "year"]
+            }
+        };
+
+        // New schema for series discovery results
+        const seriesDiscoverySchema = {
+            type: "ARRAY",
+            items: {
+                type: "OBJECT",
+                properties: {
+                    "title": { "type": "STRING" },
+                    "genre": { "type": "STRING" },
+                    "overview": { "type": "STRING" }
+                },
+                propertyOrdering: ["title", "genre", "overview"]
+            }
+        };
+
+        let chatHistory = []; // Stores the conversation history for the LLM
+
+        // Function to display a message in the chat window
+        function displayMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', sender, 'readable-text');
+            messageElement.textContent = message;
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to bottom
+        }
+
+        // Function to display structured movie data in the modal
+        function displayStructuredMoviesInModal(movies) {
+            modalMovieList.innerHTML = ''; // Clear previous content
+            modalRefineInput.value = ''; // Clear refinement input
+            modalRefinePrompt.classList.remove('hidden'); // Show refine prompt
+            modalRefineInput.classList.remove('hidden'); // Show refine input
+            modalShowMoviesButton.classList.remove('hidden'); // Show refine button
+            modalRefreshButton.classList.remove('hidden'); // Show refresh button
+            modalTitle.textContent = "Your Movie Picks!";
+
+            if (movies.length > 0) {
+                movies.forEach(movie => {
+                    const movieCard = document.createElement('div');
+                    movieCard.classList.add('movie-card');
+                    movieCard.innerHTML = `
+                        <h4>${movie.title} (${movie.year || 'N/A'})</h4>
+                        <p>${movie.description}</p>
+                        <p class="ratings">IMDB: ${movie.imdb_rating || 'N/A'} | Rotten Tomatoes: ${movie.rotten_tomatoes || 'N/A'}</p>
+                        <button class="favorite-button mt-2 px-4 py-2 bg-purple-700 text-white rounded-lg text-sm btn-neutral"
+                                data-title="${movie.title}"
+                                data-description="${movie.description}"
+                                data-imdb="${movie.imdb_rating || 'N/A'}"
+                                data-rt="${movie.rotten_tomatoes || 'N/A'}"
+                                data-year="${movie.year || 'N/A'}">
+                            Favorite 🌟
+                        </button>
+                    `;
+                    modalMovieList.appendChild(movieCard);
+                });
+                modalNoSuggestions.classList.add('hidden');
+            } else {
+                modalNoSuggestions.classList.remove('hidden');
+            }
+            movieSuggestionsModal.style.display = 'flex'; // Show the modal
+            addFavoriteButtonListeners(); // Add listeners to new buttons
+        }
+
+        // Function to display series details in the modal (individual movie boxes)
+        function displaySeriesDetailsInModal(seriesData) {
+            modalMovieList.innerHTML = ''; // Clear previous content
+            modalRefineInput.value = ''; // Clear refinement input
+            modalRefinePrompt.classList.add('hidden'); // Hide refine prompt for series details
+            modalRefineInput.classList.add('hidden'); // Hide refine input for series details
+            modalShowMoviesButton.classList.add('hidden'); // Hide refine button for series details
+            modalRefreshButton.classList.add('hidden'); // Hide refresh button for series details
+            modalTitle.textContent = `${seriesData.series_title} (${seriesData.series_type || 'Series'})`;
+
+            if (seriesData.films && seriesData.films.length > 0) {
+                seriesData.films.forEach(film => {
+                    const filmCard = document.createElement('div');
+                    filmCard.classList.add('movie-card'); // Re-use movie-card style
+                    filmCard.innerHTML = `
+                        <h4>${film.title} (${film.year || 'N/A'})</h4>
+                        <p>${film.description}</p>
+                        <p class="ratings">IMDB: ${film.imdb_rating || 'N/A'} | Rotten Tomatoes: ${film.rotten_tomatoes || 'N/A'}</p>
+                        <button class="favorite-button mt-2 px-4 py-2 bg-purple-700 text-white rounded-lg text-sm btn-neutral"
+                                data-title="${film.title}"
+                                data-description="${film.description}"
+                                data-imdb="${film.imdb_rating || 'N/A'}"
+                                data-rt="${film.rotten_tomatoes || 'N/A'}"
+                                data-year="${film.year || 'N/A'}">
+                            Favorite 🌟
+                        </button>
+                    `;
+                    modalMovieList.appendChild(filmCard);
+                });
+                modalNoSuggestions.classList.add('hidden');
+            } else {
+                modalNoSuggestions.classList.remove('hidden');
+                modalNoSuggestions.textContent = `No film details found for ${seriesData.series_title}.`;
+            }
+            movieSuggestionsModal.style.display = 'flex'; // Show the modal
+            addFavoriteButtonListeners(); // Add listeners for individual movies within series
+        }
+
+        // Function to display discovered series in the modal (individual series boxes)
+        function displaySeriesDiscoveryInModal(seriesList) {
+            modalMovieList.innerHTML = ''; // Clear previous content
+            modalRefineInput.value = ''; // Clear refinement input
+            modalRefinePrompt.classList.remove('hidden'); // Show refine prompt for series discovery
+            modalRefineInput.classList.remove('hidden'); // Show refine input for series discovery
+            modalShowMoviesButton.classList.remove('hidden'); // Show refine button for series discovery
+            modalRefreshButton.classList.remove('hidden'); // Show refresh button for series discovery
+            modalTitle.textContent = "Suggested Movie Series!";
+
+            if (seriesList.length > 0) {
+                seriesList.forEach(series => {
+                    const seriesCard = document.createElement('div');
+                    seriesCard.classList.add('movie-card'); // Re-use movie-card style for series
+                    seriesCard.innerHTML = `
+                        <h4>${series.title} (${series.genre || 'N/A'})</h4>
+                        <p>${series.overview}</p>
+                        <button class="favorite-series-button mt-2 px-4 py-2 bg-purple-700 text-white rounded-lg text-sm btn-neutral"
+                                data-title="${series.title}"
+                                data-genre="${series.genre}"
+                                data-overview="${series.overview}">
+                            Favorite Series 🌟
+                        </button>
+                        <button class="view-series-details-button mt-2 ml-2 px-4 py-2 bg-blue-700 text-white rounded-lg text-sm btn-neutral"
+                                data-series-title="${series.title}">
+                            View Details 🎬
+                        </button>
+                    `;
+                    modalMovieList.appendChild(seriesCard);
+                });
+                modalNoSuggestions.classList.add('hidden');
+            } else {
+                modalNoSuggestions.classList.remove('hidden');
+                modalNoSuggestions.textContent = `No series found for your criteria.`;
+            }
+            movieSuggestionsModal.style.display = 'flex'; // Show the modal
+            addViewSeriesDetailsListeners(); // Add listeners to new buttons
+            addFavoriteSeriesButtonListeners(); // Add listeners for favoriting series
+        }
+
+
+        // Function to display general text suggestions in the modal (for trivia, soundtrack)
+        function displayGeneralSuggestionsInModal(title, suggestionsArray) {
+            modalMovieList.innerHTML = ''; // Clear previous content
+            modalRefineInput.value = ''; // Clear refinement input
+            modalRefinePrompt.classList.add('hidden'); // Hide refine prompt
+            modalRefineInput.classList.add('hidden'); // Hide refine input
+            modalShowMoviesButton.classList.add('hidden'); // Hide refine button
+            modalRefreshButton.classList.add('hidden'); // Hide refresh button
+            modalTitle.textContent = title;
+
+            if (suggestionsArray.length > 0) {
+                const ul = document.createElement('ul');
+                ul.classList.add('list-disc', 'list-inside', 'text-[#E0BBE4]', 'text-lg', 'suggestions-list');
+                suggestionsArray.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    ul.appendChild(li);
+                });
+                modalMovieList.appendChild(ul);
+                modalNoSuggestions.classList.add('hidden');
+            } else {
+                modalNoSuggestions.classList.remove('hidden');
+            }
+            movieSuggestionsModal.style.display = 'flex'; // Show the modal
+        }
+
+
+        // Function to send message to LLM (Gemini API)
+        async function sendMessageToGemini(prompt, isChat = false, isRefinement = false, responseSchema = null, modalTitleText = "Your Picks!") {
+            const apiKey = ""; // API key is provided by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            if (isChat) {
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                chatLoadingSpinner.classList.remove('hidden');
+            } else {
+                globalLoadingOverlay.style.display = 'flex';
+                if (isRefinement) {
+                    modalLoadingSpinner.classList.remove('hidden');
+                    modalMovieList.innerHTML = '';
+                    modalNoSuggestions.classList.add('hidden');
+                } else {
+                    loadingSpinner.classList.remove('hidden');
+                }
+            }
+
+            let payload = {
+                contents: isChat ? chatHistory : [{ role: "user", parts: [{ text: prompt }] }]
+            };
+
+            if (responseSchema) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema
+                };
+            }
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    let text = result.candidates[0].content.parts[0].text;
+                    console.log("API Raw Response Text:", text);
+
+                    if (isChat) {
+                        displayMessage('bot', text);
+                        chatHistory.push({ role: "model", parts: [{ text: text }] });
+                        if (db && auth.currentUser) {
+                            const currentUserId = auth.currentUser.uid;
+                            const chatCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/general_chat_history`);
+                            try {
+                                await addDoc(chatCollectionRef, {
+                                    sender: 'bot',
+                                    message: text,
+                                    timestamp: new Date()
+                                });
+                            } catch (e) {
+                                console.error("Error adding bot message to Firestore: ", e);
+                            }
+                        }
+                    } else {
+                        if (responseSchema === movieArraySchema) { // This means we expected an array of movies
+                            try {
+                                const movies = JSON.parse(text);
+                                if (Array.isArray(movies) && movies.length > 0) {
+                                    displayStructuredMoviesInModal(movies);
+                                } else {
+                                    showCustomModal("Apologies, I couldn't find structured movie suggestions. Please try another query!");
+                                    movieSuggestionsModal.style.display = 'none';
+                                }
+                            } catch (jsonError) {
+                                console.error("Error parsing movie suggestions JSON:", jsonError);
+                                showCustomModal("I found some movies, but couldn't get all the details. Here are some titles for you!");
+                                const suggestions = text.split('\n').filter(s => s.trim() !== '');
+                                displayGeneralSuggestionsInModal("Movie Titles (Details Missing)", suggestions);
+                            }
+                        } else if (responseSchema === seriesDetailsSchema) { // This means we expected a single series object
+                            try {
+                                const seriesData = JSON.parse(text);
+                                if (seriesData && seriesData.series_title && Array.isArray(seriesData.films)) {
+                                    displaySeriesDetailsInModal(seriesData);
+                                } else {
+                                    showCustomModal("Apologies, I couldn't get detailed series information. Please try another series or query!");
+                                    movieSuggestionsModal.style.display = 'none';
+                                }
+                            } catch (jsonError) {
+                                console.error("Error parsing series details JSON:", jsonError);
+                                showCustomModal("I found some series details, but couldn't parse them perfectly. Here's the raw info!");
+                                const suggestions = text.split('\n').filter(s => s.trim() !== '');
+                                displayGeneralSuggestionsInModal("Series Details (Raw Text)", suggestions);
+                            }
+                        } else if (responseSchema === seriesDiscoverySchema) { // New schema for series discovery
+                            try {
+                                const seriesList = JSON.parse(text);
+                                if (Array.isArray(seriesList) && seriesList.length > 0) {
+                                    displaySeriesDiscoveryInModal(seriesList);
+                                } else {
+                                    showCustomModal("Apologies, I couldn't find any series matching your criteria. Please try another genre!");
+                                    movieSuggestionsModal.style.display = 'none';
+                                }
+                            } catch (jsonError) {
+                                console.error("Error parsing series discovery JSON:", jsonError);
+                                showCustomModal("I found some series, but couldn't parse them perfectly. Here's the raw info!");
+                                const suggestions = text.split('\n').filter(s => s.trim() !== '');
+                                displayGeneralSuggestionsInModal("Series Discovery (Raw Text)", suggestions);
+                            }
+                        }
+                        else { // For general text responses (like trivia, soundtrack)
+                            const suggestions = text.split('\n').filter(s => s.trim() !== '').map(s => s.replace(/^[*-]\s*/, ''));
+                            displayGeneralSuggestionsInModal(modalTitleText, suggestions);
+                        }
+                    }
+                } else {
+                    console.error("Unexpected API response structure:", result);
+                    if (isChat) {
+                        displayMessage('bot', "I seem to be a little shy right now. Could you please try asking me again?");
+                    } else {
+                        showCustomModal("Apologies, I couldn't fetch suggestions right now. Please try again!");
+                        movieSuggestionsModal.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                if (isChat) {
+                    displayMessage('bot', "A little hiccup! I can't quite reach my movie wisdom at the moment. Please try again in a little while!");
+                } else {
+                    showCustomModal("A tiny cloud passed over our movie magic. Please try again in a moment!");
+                    movieSuggestionsModal.style.display = 'none';
+                }
+            } finally {
+                globalLoadingOverlay.style.display = 'none';
+                if (isChat) {
+                    chatLoadingSpinner.classList.add('hidden');
+                } else {
+                    loadingSpinner.classList.add('hidden');
+                    modalLoadingSpinner.classList.add('hidden');
+                }
+            }
+        }
+
+        // Helper function to generate movie prompts with structured output request
+        function generateStructuredPrompt(basePrompt, refinement = '') {
+            // This function is now used for both movieArraySchema and seriesDiscoverySchema
+            // The actual schema is passed to sendMessageToGemini
+            let fullPrompt = `${basePrompt} Ensure variety in your recommendations each time. Only suggest movies with an IMDB rating of 7.0 or higher.`;
+            if (refinement) {
+                fullPrompt += ` Refine these suggestions with the following in mind: "${refinement}".`;
+            }
+            return fullPrompt;
+        }
+
+        // Helper function for non-structured prompts
+        function generateTextPrompt(basePrompt) {
+            return basePrompt;
+        }
+
+        // Firestore Functions for Favorites
+        async function saveFavoriteMovie(movie) {
+            if (!db || !userId) {
+                showCustomModal("Authentication is not ready. Cannot save your movie. Please ensure you are logged in.");
+                return;
+            }
+            try {
+                const favoritesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/general_favorite_movies`);
+                await addDoc(favoritesCollectionRef, movie);
+                showCustomModal(`${movie.title} has been added to your movie list!`);
+            } catch (e) {
+                console.error("Error adding favorite movie:", e);
+                showCustomModal("A little hiccup saving your movie. Please try again!");
+            }
+        }
+
+        async function removeFavoriteMovie(docId, movieTitle) {
+            if (!db || !userId) {
+                showCustomModal("Authentication is not ready. Cannot remove your movie. Please ensure you are logged in.");
+                return;
+            }
+            try {
+                const movieDocRef = doc(db, `artifacts/${appId}/users/${userId}/general_favorite_movies`, docId);
+                await deleteDoc(movieDocRef);
+                showCustomModal(`${movieTitle} has been removed from your movie list.`);
+            } catch (e) {
+                console.error("Error removing favorite movie:", e);
+                showCustomModal("A tiny cloud passed over removing your movie. Please try again!");
+            }
+        }
+
+        async function saveFavoriteSeries(series) {
+            if (!db || !userId) {
+                showCustomModal("Authentication is not ready. Cannot save your series. Please ensure you are logged in.");
+                return;
+            }
+            try {
+                const favoritesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/general_favorite_series`);
+                await addDoc(favoritesCollectionRef, series);
+                showCustomModal(`${series.title} has been added to your series list!`);
+            } catch (e) {
+                console.error("Error adding favorite series:", e);
+                showCustomModal("A little hiccup saving your series. Please try again!");
+            }
+        }
+
+        async function removeFavoriteSeries(docId, seriesTitle) {
+            if (!db || !userId) {
+                showCustomModal("Authentication is not ready. Cannot remove your series. Please ensure you are logged in.");
+                return;
+            }
+            try {
+                const seriesDocRef = doc(db, `artifacts/${appId}/users/${userId}/general_favorite_series`, docId);
+                await deleteDoc(seriesDocRef);
+                showCustomModal(`${seriesTitle} has been removed from your series list.`);
+            } catch (e) {
+                console.error("Error removing favorite series:", e);
+                showCustomModal("A tiny cloud passed over removing your series. Please try again!");
+            }
+        }
+
+        function loadFavoriteMovies() {
+            if (!db || !userId) {
+                return;
+            }
+            // Load Movies
+            const moviesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/general_favorite_movies`);
+            onSnapshot(query(moviesCollectionRef), (snapshot) => {
+                favoriteMoviesList.innerHTML = '';
+                if (snapshot.empty) {
+                    noFavoriteMovies.classList.remove('hidden');
+                } else {
+                    noFavoriteMovies.classList.add('hidden');
+                    let movies = [];
+                    snapshot.forEach((doc) => {
+                        movies.push({ id: doc.id, ...doc.data() });
+                    });
+                    movies.sort((a, b) => a.title.localeCompare(b.title));
+
+                    movies.forEach((movie) => {
+                        const movieCard = document.createElement('div');
+                        movieCard.classList.add('movie-card');
+                        movieCard.innerHTML = `
+                            <h4>${movie.title} (${movie.year || 'N/A'})</h4>
+                            <p>${movie.description}</p>
+                            <p class="ratings">IMDB: ${movie.imdb_rating || 'N/A'} | Rotten Tomatoes: ${movie.rotten_tomatoes || 'N/A'}</p>
+                            <button class="remove-favorite-button mt-2 px-4 py-2 bg-red-700 text-white rounded-lg text-sm btn-neutral"
+                                    data-doc-id="${movie.id}"
+                                    data-title="${movie.title}">
+                                Remove 🗑️
+                            </button>
+                        `;
+                        favoriteMoviesList.appendChild(movieCard);
+                    });
+                    addRemoveFavoriteButtonListeners();
+                }
+            }, (error) => {
+                console.error("Error loading favorite movies:", error);
+                showCustomModal("I couldn't load your movie list.");
+            });
+
+            // Load Series
+            const seriesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/general_favorite_series`);
+            onSnapshot(query(seriesCollectionRef), (snapshot) => {
+                favoriteSeriesList.innerHTML = '';
+                if (snapshot.empty) {
+                    noFavoriteSeries.classList.remove('hidden');
+                } else {
+                    noFavoriteSeries.classList.add('hidden');
+                    let series = [];
+                    snapshot.forEach((doc) => {
+                        series.push({ id: doc.id, ...doc.data() });
+                    });
+                    series.sort((a, b) => a.title.localeCompare(b.title));
+
+                    series.forEach((s) => {
+                        const seriesCard = document.createElement('div');
+                        seriesCard.classList.add('movie-card'); // Re-using movie-card style
+                        seriesCard.innerHTML = `
+                            <h4>${s.title} (${s.genre || 'N/A'})</h4>
+                            <p>${s.overview}</p>
+                            <button class="remove-favorite-series-button mt-2 px-4 py-2 bg-red-700 text-white rounded-lg text-sm btn-neutral"
+                                    data-doc-id="${s.id}"
+                                    data-title="${s.title}">
+                                Remove 🗑️
+                            </button>
+                            <button class="view-series-details-button mt-2 ml-2 px-4 py-2 bg-blue-700 text-white rounded-lg text-sm btn-neutral"
+                                    data-series-title="${s.title}">
+                                View Details 🎬
+                            </button>
+                        `;
+                        favoriteSeriesList.appendChild(seriesCard);
+                    });
+                    addRemoveFavoriteSeriesButtonListeners();
+                    addViewSeriesDetailsListeners(); // Re-add listeners for series details buttons
+                }
+            }, (error) => {
+                console.error("Error loading favorite series:", error);
+                showCustomModal("I couldn't load your series list.");
+            });
+        }
+
+        function addFavoriteButtonListeners() {
+            document.querySelectorAll('.favorite-button').forEach(button => {
+                button.onclick = () => {
+                    const movie = {
+                        title: button.dataset.title,
+                        description: button.dataset.description,
+                        imdb_rating: button.dataset.imdb,
+                        rotten_tomatoes: button.dataset.rt,
+                        year: button.dataset.year
+                    };
+                    saveFavoriteMovie(movie);
+                };
+            });
+        }
+
+        function addRemoveFavoriteButtonListeners() {
+            document.querySelectorAll('.remove-favorite-button').forEach(button => {
+                button.onclick = () => {
+                    const docId = button.dataset.docId;
+                    const movieTitle = button.dataset.title;
+                    removeFavoriteMovie(docId, movieTitle);
+                };
+            });
+        }
+
+        function addFavoriteSeriesButtonListeners() {
+            document.querySelectorAll('.favorite-series-button').forEach(button => {
+                button.onclick = () => {
+                    const series = {
+                        title: button.dataset.title,
+                        genre: button.dataset.genre,
+                        overview: button.dataset.overview
+                    };
+                    saveFavoriteSeries(series);
+                };
+            });
+        }
+
+        function addRemoveFavoriteSeriesButtonListeners() {
+            document.querySelectorAll('.remove-favorite-series-button').forEach(button => {
+                button.onclick = () => {
+                    const docId = button.dataset.docId;
+                    const seriesTitle = button.dataset.title;
+                    removeFavoriteSeries(docId, seriesTitle);
+                };
+            });
+        }
+
+
+        // Listener for "View Details" buttons on series discovery cards and favorited series
+        function addViewSeriesDetailsListeners() {
+            document.querySelectorAll('.view-series-details-button').forEach(button => {
+                button.onclick = () => {
+                    const seriesTitle = button.dataset.seriesTitle;
+                    const prompt = `You are a helpful movie series expert. Provide details for the movie series "${seriesTitle}". Include the series type (e.g., "trilogy", "duology", "pentalogy"), and for each film in the series, provide its title, a brief spoiler-free description, IMDB rating (7.0 or higher), Rotten Tomatoes score, and release year. If ratings/year are unavailable, use "N/A".`;
+                    sendMessageToGemini(generateTextPrompt(prompt), false, false, seriesDetailsSchema, `Details for "${seriesTitle}" Series`);
+                };
+            });
+        }
+
+
+        // Event Listeners for Movie Suggestions (now trigger modal)
+        moodSubmit.addEventListener('click', () => {
+            const mood = moodSelect.value;
+            if (mood) {
+                currentMoviePrompt = `You are a helpful movie picker. Suggest 5 movies that fit the "${mood}" mood.`;
+                currentPromptSchema = movieArraySchema; // Set the schema for refinement/refresh
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please select a mood first!");
+            }
+        });
+
+        genreSubmit.addEventListener('click', () => {
+            const genre = genreSelect.value;
+            if (genre) {
+                currentMoviePrompt = `You are a helpful movie picker. Suggest 5 movies from the "${genre}" genre.`;
+                currentPromptSchema = movieArraySchema;
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please select a genre first!");
+            }
+        });
+
+        keywordSubmit.addEventListener('click', () => {
+            const keywords = keywordInput.value.trim();
+            if (keywords) {
+                currentMoviePrompt = `You are a helpful movie picker. Suggest 5 movies that fit the theme/keywords: "${keywords}".`;
+                currentPromptSchema = movieArraySchema;
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please enter some keywords or a theme!");
+            }
+        });
+
+        personSubmit.addEventListener('click', () => {
+            const person = personInput.value.trim();
+            if (person) {
+                currentMoviePrompt = `You are a helpful movie picker. Suggest 5 movies featuring or directed by "${person}".`;
+                currentPromptSchema = movieArraySchema;
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please enter a director or actor's name!");
+            }
+        });
+
+        similarSubmit.addEventListener('click', () => {
+            const movie = similarInput.value.trim();
+            if (movie) {
+                currentMoviePrompt = `You are a helpful movie picker. Suggest 5 movies that are similar to "${movie}".`;
+                currentPromptSchema = movieArraySchema;
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please enter a movie title to find similar ones!");
+            }
+        });
+
+        movieNightSubmit.addEventListener('click', () => {
+            const theme = movieNightThemeInput.value.trim();
+            if (theme) {
+                currentMoviePrompt = `You are a helpful movie and movie night planner. Based on the movie night theme "${theme}", suggest 5 movies and a simple activity or snack idea that pairs perfectly with the movie.`;
+                currentPromptSchema = movieArraySchema;
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please tell me your movie night theme!");
+            }
+        });
+
+        moviePlotSubmit.addEventListener('click', () => {
+            const movieTitle = moviePlotInput.value.trim();
+            if (movieTitle) {
+                currentPromptSchema = null; // Text-only response
+                const prompt = `You are a helpful movie assistant. Provide a brief, spoiler-free plot summary for the movie "${movieTitle}".`;
+                sendMessageToGemini(generateTextPrompt(prompt), false, false, null, `Summary for "${movieTitle}"`);
+            } else {
+                showCustomModal("Please enter a movie title to summarize!");
+            }
+        });
+
+        watchSuggestionsSubmit.addEventListener('click', () => {
+            currentMoviePrompt = `You are a helpful movie picker. Suggest 5 general movies that are perfect for a casual watch.`;
+            currentPromptSchema = movieArraySchema;
+            sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+        });
+
+        surpriseMeSubmit.addEventListener('click', () => {
+            currentMoviePrompt = `You are a helpful movie picker. Suggest 5 random movies that would surprise and delight.`;
+            currentPromptSchema = movieArraySchema;
+            sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+        });
+
+        // Movie Trivia/Fun Facts Event Listener
+        movieTriviaSubmit.addEventListener('click', () => {
+            const movieTitle = movieTriviaInput.value.trim();
+            if (movieTitle) {
+                currentPromptSchema = null; // Text-only response
+                const prompt = `You are a helpful movie trivia expert. Provide 3-5 interesting and fun facts about "${movieTitle}". Format as a bulleted list.`;
+                sendMessageToGemini(generateTextPrompt(prompt), false, false, null, `Fun Facts about "${movieTitle}"`);
+            } else {
+                showCustomModal("Please enter a movie title for trivia!");
+            }
+        });
+
+        // Personalized Movie Soundtrack Event Listener
+        soundtrackSubmit.addEventListener('click', () => {
+            const moodTheme = soundtrackMoodInput.value.trim();
+            if (moodTheme) {
+                currentPromptSchema = null; // Text-only response
+                const prompt = `You are a helpful music curator. Based on the mood/theme "${moodTheme}", suggest 3-5 songs that would create a perfect personalized movie soundtrack. Include artist and song title. Format as a bulleted list.`;
+                sendMessageToGemini(generateTextPrompt(prompt), false, false, null, `Soundtrack for "${moodTheme}"`);
+            } else {
+                showCustomModal("Please describe the mood for the soundtrack!");
+            }
+        });
+
+        // Who I am watching with Event Listener
+        watchingWithSubmit.addEventListener('click', () => {
+            const audience = watchingWithSelect.value;
+            if (audience) {
+                currentMoviePrompt = `You are a helpful movie picker. Suggest 5 movies perfect for watching with "${audience}". Consider the audience's preferences and suitability.`;
+                currentPromptSchema = movieArraySchema;
+                sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema);
+            } else {
+                showCustomModal("Please select who you are watching with!");
+            }
+        });
+
+        // Movie Series Event Listener (for specific series details)
+        movieSeriesSubmit.addEventListener('click', () => {
+            const seriesName = movieSeriesInput.value.trim();
+            if (seriesName) {
+                currentPromptSchema = seriesDetailsSchema; // Set to series details schema
+                const prompt = `You are a helpful movie series expert. Provide details for the movie series "${seriesName}". Include the series type (e.g., "trilogy", "duology", "pentalogy"), and for each film in the series, provide its title, a brief spoiler-free description, IMDB rating (7.0 or higher), Rotten Tomatoes score, and release year. If ratings/year are unavailable, use "N/A".`;
+                sendMessageToGemini(generateTextPrompt(prompt), false, false, seriesDetailsSchema, `Details for "${seriesName}" Series`);
+            } else {
+                showCustomModal("Please enter a movie series name!");
+            }
+        });
+
+        // NEW: Discover Movie Series Event Listener (now uses dropdown)
+        seriesDiscoverySubmit.addEventListener('click', () => {
+            const seriesGenre = seriesDiscoverySelect.value;
+            if (seriesGenre) {
+                currentMoviePrompt = `You are a helpful movie series recommender. Suggest 3-5 movie series based on the genre: "${seriesGenre}". For each series, provide its title, main genre, and a very brief overview (1-2 sentences).`;
+                currentPromptSchema = seriesDiscoverySchema; // Set to series discovery schema
+                sendMessageToGemini(generateTextPrompt(currentMoviePrompt), false, false, seriesDiscoverySchema, `Suggested Movie Series for "${seriesGenre}"`);
+            } else {
+                showCustomModal("Please select a genre for series discovery!");
+            }
+        });
+
+
+        // Event Listener for "Show These Movies!" button in the modal
+        modalShowMoviesButton.addEventListener('click', () => {
+            const refinement = modalRefineInput.value.trim();
+            if (currentMoviePrompt && currentPromptSchema) { // Check if a schema is set
+                if (currentPromptSchema === movieArraySchema) {
+                    sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt, refinement), false, true, movieArraySchema);
+                } else if (currentPromptSchema === seriesDiscoverySchema) {
+                    sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt, refinement), false, true, seriesDiscoverySchema);
+                } else {
+                    showCustomModal("Refinement is not available for this type of suggestion.");
+                }
+            } else {
+                showCustomModal("It seems I can only refine movie or series suggestions. Please try selecting an option again!");
+                movieSuggestionsModal.style.display = 'none';
+            }
+        });
+
+        // Event Listener for "Refresh Suggestions" button in the modal
+        modalRefreshButton.addEventListener('click', () => {
+            if (currentMoviePrompt && currentPromptSchema) { // Check if a schema is set
+                if (currentPromptSchema === movieArraySchema) {
+                    sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, movieArraySchema); // Re-send original prompt
+                } else if (currentPromptSchema === seriesDiscoverySchema) {
+                    sendMessageToGemini(generateStructuredPrompt(currentMoviePrompt), false, false, seriesDiscoverySchema); // Re-send original prompt
+                } else {
+                    showCustomModal("Refreshing is not available for this type of suggestion.");
+                }
+            } else {
+                showCustomModal("I can only refresh structured movie or series suggestions. Please try another option!");
+                movieSuggestionsModal.style.display = 'none';
+            }
+        });
+
+        // Close movie suggestions modal
+        closeMovieModalButton.addEventListener('click', () => {
+            movieSuggestionsModal.style.display = 'none';
+        });
+
+
+        // Event Listeners for Chatbot
+        chatSendButton.addEventListener('click', async () => {
+            const userMessage = chatInput.value.trim();
+            if (userMessage) {
+                displayMessage('user', userMessage);
+                chatInput.value = ''; // Clear input
+
+                // Add user message to chat history for persistence
+                if (db && auth.currentUser) {
+                    const currentUserId = auth.currentUser.uid;
+                    const chatCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/general_chat_history`);
+                    try {
+                        await addDoc(chatCollectionRef, {
+                            sender: 'user',
+                            message: userMessage,
+                            timestamp: new Date()
+                        });
+                    } catch (e) {
+                        console.error("Error adding user message to Firestore: ", e);
+                    }
+                }
+
+                // Prepare the prompt for the chatbot, emphasizing the persona
+                const chatbotPrompt = `You are a helpful and friendly chatbot named 'Movie Bot'. Your goal is to help the user pick a movie or answer movie-related questions. Respond to their message: "${userMessage}"`;
+                await sendMessageToGemini(chatbotPrompt, true);
+            } else {
+                showCustomModal("Please type something before sending!");
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                chatSendButton.click();
+            }
+        });
+
+        // Tab switching logic
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Deactivate all tabs and hide all content
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                // Activate the clicked tab and show its content
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.add('active');
+
+                // If "My List" tab is selected, load favorite movies
+                if (button.dataset.tab === 'my-list') {
+                    loadFavoriteMovies();
+                }
+
+                // Clear previous movie suggestions when switching tabs
+                suggestionsList.innerHTML = '';
+                movieSuggestionsDiv.classList.add('hidden');
+                noSuggestionsPara.classList.add('hidden');
+            });
+        });
+
+        // Setup Firestore listener for chat history
+        function setupChatListener() {
+            if (!db || !auth.currentUser) {
+                return;
+            }
+            const currentUserId = auth.currentUser.uid;
+            const chatCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/general_chat_history`);
+            const q = query(chatCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                const initialBotMessage = chatWindow.querySelector('.chat-message.bot');
+                chatWindow.innerHTML = '';
+                if (initialBotMessage) {
+                    chatWindow.appendChild(initialBotMessage);
+                }
+
+                chatHistory = [];
+                let messages = [];
+                snapshot.forEach((doc) => {
+                    messages.push(doc.data());
+                });
+                messages.sort((a, b) => {
+                    const timestampA = a.timestamp && typeof a.timestamp.toDate === 'function' ? a.timestamp.toDate() : new Date(0);
+                    const timestampB = b.timestamp && typeof b.timestamp.toDate === 'function' ? b.timestamp.toDate() : new Date(0);
+                    return timestampA - timestampB;
+                });
+
+                messages.forEach((data) => {
+                    displayMessage(data.sender, data.message);
+                    chatHistory.push({ role: data.sender === 'user' ? 'user' : 'model', parts: [{ text: data.message }] });
+                });
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, (error) => {
+                console.error("Error listening to chat history:", error);
+                showCustomModal("I couldn't load our past conversations. But let's start fresh!");
+            });
+        }
+
+        // Initialize Lottie animations
+        window.onload = function() {
+            lottie.loadAnimation({
+                container: document.getElementById('lottie-sparkle-top-left'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'https://assets2.lottiefiles.com/packages/lf20_t0y0g0g0.json' // Small sparkle
+            });
+            lottie.loadAnimation({
+                container: document.getElementById('lottie-sparkle-bottom-right'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'https://assets2.lottiefiles.com/packages/lf20_t0y0g0g0.json' // Small sparkle
+            });
+            lottie.loadAnimation({
+                container: document.getElementById('lottie-header-sparkle'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'https://assets2.lottiefiles.com/packages/lf20_t0y0g0g0.json' // Small sparkle
+            });
+        };
+    </script>
+</body>
+</html>
